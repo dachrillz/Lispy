@@ -1,4 +1,6 @@
 ;;Example Program.
+;; TO RUN THE PROGRAM, Type; in the same folder as the files: python lispy.py test.ly
+
 ;; TODO: Decide if one really should have (a) to evaluate the bound variable a.
 ;; Maybe only a is necessary.
 
