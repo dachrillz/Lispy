@@ -10,6 +10,20 @@ class Environment():
         self.outer = outer
         self.variables = {}
         
+        
+    def __str__(self, i = 0):
+        list = ['|Items in env ' + str(i) + '|']
+        for item in self.variables:
+            list.append(item)
+            list.append(':')
+            
+        if self.outer != None:
+            i += 1
+            list.append(self.outer.__str__(i))
+            
+
+        return ' '.join(list)
+        
     def addVar(self,key,variable):
         if self.isMember(key):
             return None
@@ -27,12 +41,13 @@ class Environment():
             return False
         
     def getMember(self,key):
-        print('heheh')
-        print(key)
         if self.isMember(key) == True:
             return self.variables[key]
         else:
-            print('variable not found') # do recursion here!
+            if self.outer == None:
+                return None
+            else:
+                return self.outer.getMember(key)
             
     def define(self,name,value):
         '''
@@ -47,15 +62,7 @@ class Environment():
             
         return value
     
-def createList(x,y):
-    '''
-    This is a support function for the Environment Function, 'list'
-    '''
-    if type(x) == int:
-        x = [x]
-    return x + [y]
-    
-        
+       
 def EnvFact():
     Env = Environment()
     
@@ -68,6 +75,7 @@ def EnvFact():
     Env.addVar('head', (lambda x,y: y[0]))
     Env.addVar('tail', (lambda x,y: y[1]))
     Env.addVar('def', lambda x,y: Env.define(x,y))
+    Env.addVar('let', lambda x,y: bindEnv(x,y))
 
     return Env
 
@@ -79,6 +87,16 @@ characters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q
 numbers = ['0','1','2','3','4','5','6','7','8','9']
 keywords = ['def','let']
 
+def bindEnv(x,y):
+    x = Environment(y)
+
+def createList(x,y):
+    '''
+    This is a support function for the Environment Function Factory, 'list'
+    '''
+    if type(x) == int:
+        x = [x]
+    return x + [y]
 
 def convertStringToQueue(string):
     stringDeque = deque([])
@@ -206,10 +224,10 @@ def eval(AST,env):
     evaluatedValue = 0
     
     if(len(AST) == 1): #if the length of the expression is only 1, we can evaluate directly.
-        evaluatedSymbol = eval_AST(AST.popleft(),env)
-        
-        if(env.isMember(evaluatedSymbol)):
-            return evaluatedSymbol
+        s = AST.popleft()
+ 
+        if(env.isMember(s[4:])):
+            return eval_AST(s,env)
         else:
             print('Variable is not member of environment. Change to expection class later')
             return None
@@ -222,6 +240,8 @@ def eval(AST,env):
             if boundFunction != None: #if a function is already bound use it to calculate.
                 evaluatedValue = boundFunction(evaluatedValue,evaluatedSymbol)
                 first = False
+            else:
+                evaluatedValue = evaluatedSymbol
                 
 
         else: #if not deque we evaluate
@@ -230,6 +250,28 @@ def eval(AST,env):
             if s == 'Sym:def': #def is a special keyword that we treat specially
                 if(env.isMember(AST[0][4:])):
                     return AST[0][4:] #the variable was already defined, this is sloppy hacky code.
+                    
+            elif s == 'Sym:let': #let is a special keyword as well.
+                #some conditionals so it does this right, pop a deque and do the let while not empty.
+                if type(AST[0]) == deque:
+                    env = Environment(env) #create the new environment.
+                    s = AST.popleft()
+                    while(len(s) != 0):
+                        letS = s.popleft()
+                        s1 = letS[0]
+                        s1 = s1[4:]
+                        if type(letS[1]) == deque: #calls eval here if element need to be evaluated.
+                            s2 = eval(letS[1],env)
+                        else:
+                            s2 = letS[1]
+                            s2 = s2[4:]
+                            
+                        env.define(s1,s2)
+                else:
+                    print('error here, a deque was not passed to let.')
+                
+                evaluatedSymbol = None #resets the bound function.
+                first = False
                         
             if callable(evaluatedSymbol): #this checks whether evaluated is a callable object. (that is: is it a function?)
                 boundFunction = evaluatedSymbol
@@ -240,9 +282,12 @@ def eval(AST,env):
                 
             elif boundFunction != None: #here we evalute the values to a function bound in the environment.
                 evaluatedValue = boundFunction(evaluatedValue,evaluatedSymbol)
+                
+            elif env.isMember(evaluatedSymbol) == False and first == True:
+                print('the symbol was not found in the environment')
+                return None
 
     
-
     return evaluatedValue
 
 
@@ -256,9 +301,8 @@ def eval_AST(s,env):
     #case of symbol
     if 'Sym:' in s:
         symbol = s[4:]
-    
-        if env.isMember(symbol):
-            evaluated = env.getMember(symbol)
+        evaluated = env.getMember(symbol)    
+        if evaluated != None:
             return evaluated
             
         else:
@@ -282,7 +326,6 @@ def RunLanguage():
     #create the global environment.
     glob = EnvFact()
     while(True):
-        print('fisk')
 
         InputString = input("Input> ")
         
