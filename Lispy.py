@@ -1,5 +1,6 @@
 #imports.
 from collections import deque # used for the parsing tree
+import sys # used for reading other files.
 
 #############################
 # Classes
@@ -73,7 +74,7 @@ def EnvFact():
     Env.addVar('/',(lambda x,y: x/y))
     Env.addVar('list', (lambda x,y: createList(x,y)))
     Env.addVar('head', (lambda x,y: y[0]))
-    Env.addVar('tail', (lambda x,y: y[1]))
+    Env.addVar('tail', (lambda x,y: y[1:]))
     Env.addVar('def', lambda x,y: Env.define(x,y))
     Env.addVar('let', lambda x,y: bindEnv(x,y))
 
@@ -287,7 +288,7 @@ def eval(AST,env):
                 print('the symbol was not found in the environment')
                 return None
 
-    
+    #print(evaluatedValue)
     return evaluatedValue
 
 
@@ -322,34 +323,61 @@ def eval_AST(s,env):
 '''
 Start the main evaluation loop
 '''
-def RunLanguage():  
+def RunLanguage():
     #create the global environment.
     glob = EnvFact()
-    while(True):
+    
+    #Run the repl as no files was passed.
+    if(len(sys.argv) == 1):
+        print('Argument List:', str(sys.argv))
+        print('Number of arguments:', len(sys.argv), 'arguments.')
+        print('Welcome to the Lispy REPL!')
 
-        InputString = input("Input> ")
+        while(True):
+
+            InputString = input("Input> ")
+            
+            if InputString == 'bajs':
+                for item in glob.variables:
+                    print(item)
+
+            else:
+                print("To be passed to AST " + InputString)
+                
+                InputString = convertStringToQueue(InputString) #convert to a deque
+                
+                abstractSyntaxTree = AST(InputString)
+                
+                print('abstractSyntaxTree')
+                print(abstractSyntaxTree)
+                
+                evaluatedValue = eval(abstractSyntaxTree,glob)
+                
+                print('evaluated value')
+                print(evaluatedValue)
+                
+    
+    #else, parse the passed file.
+    else:
+        with open(sys.argv[1]) as f: #TODO: make this variable. (If one is to be able to pass more than one file that is.)
+            for line in f:
+                line = line.replace('\n','')
+                if bool(line) and not line[0:2] == ';;':
+                    try:
+                        InputString = convertStringToQueue(line)
+                        abstractSyntaxTree = AST(InputString)
+                        evaluatedValue = eval(abstractSyntaxTree,glob)
+                        print(evaluatedValue)
+                    except:
+                        print('Error in the parsing of file.' + line)
+                    
+                    
+        f.close()
         
-        if InputString == 'bajs':
-            for item in glob.variables:
-                print(item)
-
-        else:
-            print("To be passed to AST " + InputString)
-            
-            InputString = convertStringToQueue(InputString) #convert to a deque
-            
-            abstractSyntaxTree = AST(InputString)
-            
-            print('abstractSyntaxTree')
-            print(abstractSyntaxTree)
-            
-            evaluatedValue = eval(abstractSyntaxTree,glob)
-            
-            print('evaluated value')
-            print(evaluatedValue)
 
 #############################
 # Run main 
 #############################     
   
 RunLanguage()
+
