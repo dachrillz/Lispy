@@ -24,17 +24,17 @@
 ;; Basic list operations currently implemented.
 (print (list 1 2 3)) ;; This way one evaluates a list.
 (print (def a (list 1 2 3))) ;; Bind the value of the list to the name a.
-(print (head (a))) ;; This way one retrieves the head of a list.
-(print (tail (a))) ;; This way one retrieves the tail of a list.
+(print (head a)) ;; This way one retrieves the head of a list.
+(print (tail a)) ;; This way one retrieves the tail of a list.
 
 (print hej) ;; this should throw an error :)
 
 ;;Variable declarations.
 (print (def b 6)) ;; Binds the variable b to the value 6 in the current environment.
 (print b) ;; Recall the value of a bound variable.
-(print (let ((c 2)) (c))) ;; This way one can create a local Environment and bind the variable c in that environment.
-(print (let ((c (+ 2 3))) (c))) ;; Values can be evaluated in the binding.
-(print (let ((c 1)(d 1)) (+ c 2))) ;; TODO: THIS STATEMENT IS CURRENTLY BUGGED. :(
+(print (let ((c 2)) c)) ;; This way one can create a local Environment and bind the variable c in that environment.
+(print (let ((c (+ 2 3))) c)) ;; Values can be evaluated in the binding.
+(print (let ((c 1)(d 1)) (+ c 2))) ;;h
 
 
 

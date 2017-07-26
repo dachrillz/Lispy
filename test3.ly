@@ -68,11 +68,11 @@ g
 ;; Testing outer environment
 (def a 4)
 ;;=>4
-(let ((q 9)) (q))
+(let ((q 9)) q)
 ;;=>9
-(let ((q 9)) (a))
+(let ((q 9)) a)
 ;;=>4
-(let ((z 2) (let ((q 9)) a)))
+(let ((z 2) (let ((q 9)))) a) ;; this one is still bugged.
 ;;=>4
 (let ((x 4)) (def a 5))
 ;;=>5

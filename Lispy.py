@@ -46,6 +46,7 @@ class Environment():
             return self.variables[key]
         else:
             if self.outer == None:
+                print('member not foundin getMember')
                 return None
             else:
                 return self.outer.getMember(key)
@@ -77,7 +78,7 @@ def EnvFact():
     Env.addVar('tail', (lambda x,y: y[1:]))
     Env.addVar('def', lambda x,y: Env.define(x,y))
     Env.addVar('let', lambda x,y: bindEnv(x,y))
-    Env.addVar('print', lambda x,y: LispPrint(y))
+    Env.addVar('print', lambda x,y: LispPrint(y,Env))
 
     return Env
 
@@ -91,15 +92,15 @@ numbers = ['0','1','2','3','4','5','6','7','8','9']
 keywords = ['def','let']
 
 def bindEnv(x,y):
-    print('hej')
     x = Environment(y)
     
-def LispPrint(y):
+def LispPrint(y,env):
     '''
     Support function for print.
     '''
     print(y)
     return y
+
 
 def createList(x,y):
     '''
@@ -171,7 +172,6 @@ def AST(stringDeque):
     
 
 def eval(AST,env):
-    print('eval')
     boundFunction = None
     first = True
     evaluatedValue = 0
@@ -179,7 +179,7 @@ def eval(AST,env):
     if(len(AST) == 1): #if the length of the expression is only 1, we can evaluate directly.
         s = AST.popleft()
  
-        if(env.isMember(s[4:])):
+        if env.getMember(s[4:]) != None:
             return eval_AST(s,env)
         else:
             print('Variable is not member of environment. Change to expection class later')
@@ -200,8 +200,20 @@ def eval(AST,env):
         else: #if not deque we evaluate
             evaluatedSymbol = eval_AST(s,env) #retrieve the value or function from the AST.
    
-            if s == 'Sym:def' and env.isMember(AST[0][4:]): #if s is def, and the next value in AST i already defined -> the variable was already bound.
-                return AST[0][4:]
+            if s == 'Sym:def':
+                boundFunction = evaluatedSymbol
+                if env.isMember(AST[0][4:]): #if s is def, and the next value in AST i already defined -> the variable was already bound.
+                    return AST[0][4:]
+                else: #else bind the variable.
+                    s1 = AST.popleft()
+                    s2 = AST.popleft()
+                    s1 = s1[4:]
+                    if type(s2) == deque:
+                        s2 = eval(s2,env)
+                    else:
+                        s2 = eval_AST(s2,env)
+                    evaluatedValue = boundFunction(s1,s2)
+                    boundFunction = None
                     
             elif s == 'Sym:let': #let is a special keyword as well.
                 #some conditionals so it does this right, pop a deque and do the let while not empty.
@@ -219,15 +231,42 @@ def eval(AST,env):
                             s2 = eval_AST(s2,env)
                             
                         env.define(s1,s2)
+                    if(type(AST[0]) == deque):
+                        evaluatedValue = eval(AST.popleft(),env)
+                    else:
+                        evaluatedValue = eval(AST,env)
+                        
                 else:
                     print('error here, a deque was not passed to let.')
                 
                 evaluatedSymbol = None #resets the bound function.
                 first = False
-                        
+            
+
             if callable(evaluatedSymbol): #this checks whether evaluated is a callable object. (that is: is it a function?)
                 boundFunction = evaluatedSymbol
-                
+                while(len(AST) != 0):
+                    s = AST.popleft()
+                    if first == True and len(AST) != 0:
+                        if(type(s) == deque):
+                            evaluatedSymbol = eval(s,env)
+                        else:
+                            evaluatedSymbol = eval_AST(s,env)
+                        evaluatedValue = evaluatedSymbol
+                        first = False
+                    else:
+                        if(type(s) == deque):
+                            evaluatedSymbol = eval(s,env)
+                        else:
+                            evaluatedSymbol = eval_AST(s,env)
+                        evaluatedValue = boundFunction(evaluatedValue,evaluatedSymbol)
+
+                        
+            elif env.isMember(evaluatedSymbol) == False and first == True:
+                print('the symbol was not found in the environment')
+                return None
+                        
+            '''    
             elif boundFunction != None and first == True and len(AST) == 0: #this means a single argument was passed to function.
                 if env.isMember(s[4:]):
                     evaluatedValue = boundFunction(evaluatedValue,evaluatedSymbol)
@@ -240,12 +279,8 @@ def eval(AST,env):
                 
             elif boundFunction != None: #here we evalute the values to a function bound in the environment.
                 evaluatedValue = boundFunction(evaluatedValue,evaluatedSymbol)
-                
-            elif env.isMember(evaluatedSymbol) == False and first == True:
-                print('the symbol was not found in the environment')
-                return None
+            '''    
 
-    print(evaluatedValue)
     return evaluatedValue
 
 
@@ -259,7 +294,7 @@ def eval_AST(s,env):
     #case of symbol
     if 'Sym:' in s:
         symbol = s[4:]
-        evaluated = env.getMember(symbol)    
+        evaluated = env.getMember(symbol)
         if evaluated != None:
             return evaluated
             
