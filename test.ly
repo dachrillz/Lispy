@@ -27,7 +27,7 @@
 (print (head (a))) ;; This way one retrieves the head of a list.
 (print (tail (a))) ;; This way one retrieves the tail of a list.
 
-(print hej)
+(print hej) ;; this should throw an error :)
 
 ;;Variable declarations.
 (print (def b 6)) ;; Binds the variable b to the value 6 in the current environment.

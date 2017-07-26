@@ -85,7 +85,8 @@ def EnvFact():
 # Functions
 #############################
 
-characters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+characters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 numbers = ['0','1','2','3','4','5','6','7','8','9']
 keywords = ['def','let']
 
@@ -170,6 +171,7 @@ def AST(stringDeque):
     
 
 def eval(AST,env):
+    print('eval')
     boundFunction = None
     first = True
     evaluatedValue = 0
@@ -243,7 +245,7 @@ def eval(AST,env):
                 print('the symbol was not found in the environment')
                 return None
 
-    #print(evaluatedValue)
+    print(evaluatedValue)
     return evaluatedValue
 
 
@@ -321,7 +323,8 @@ def RunLanguage():
                     try:
                         InputString = convertStringToQueue(line)
                         abstractSyntaxTree = AST(InputString)
-                        eval(abstractSyntaxTree,glob)
+                        evaluatedValue = eval(abstractSyntaxTree,glob)
+                        print(evaluatedValue)
                     except:
                         print('Error in the parsing of file.' + line)
                     
