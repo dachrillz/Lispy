@@ -1,6 +1,3 @@
-from Language import *
-
-
 def RunLanguage():
     # create the global environment.
     glob = EnvFact()
